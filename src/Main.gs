@@ -68,6 +68,9 @@ function onRemoveFromSpace(e) { console.log('Bot removed from ' + ((e && e.space
 
 /** Web App dijalankan sebagai pemilik, dibatasi Only myself. */
 function doGet() {
+  // Inisialisasi antrean otomatis saat pemilik membuka player Web App.
+  // Deploy web app sebagai Execute as me, access Only myself.
+  setupOnce();
   return HtmlService.createHtmlOutputFromFile('Player').setTitle('Office Music Bot — Player');
 }
 function playerGetState() {

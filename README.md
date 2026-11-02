@@ -16,9 +16,9 @@ Prototype for office Google Chat music requests and queue management, with playb
 2. Create a Google Apps Script project. Enable Apps Script API in your account settings if using clasp. Associate the same standard Google Cloud project where needed.
 3. Push \`src/\` using clasp, or copy \`Main.gs\`, \`Player.html\`, and \`appsscript.json\` to the project manually.
 4. Configure **Script Properties**: \`YOUTUBE_API_KEY\`, \`ALLOWED_SPACE_NAME\` (for production), \`ADMIN_IDS\`; \`SPREADSHEET_ID\` will be set by \`setupOnce()\`. Never commit secrets.
-5. Run \`setupOnce()\` in the Apps Script editor and authorize creating the queue spreadsheet.
+5. No manual \`setupOnce()\` is needed for the web-player flow. After deploying the web app as **Execute as me / Only myself**, open its URL as the script owner. The first visit calls \`setupOnce()\` to create the queue spreadsheet; Google may still require the owner to authorize Spreadsheet scopes before this succeeds. You can also run \`setupOnce()\` in the Apps Script editor if authorization/setup is blocked.
 6. Configure Google Chat API connection to the Apps Script deployment and add the app to a test Chat Space. Use \`@Bot whoami\` to learn the Space and user IDs.
-7. Deploy the Apps Script web app as **Execute as me / Only myself**; open the resulting URL in Chrome or Edge on the Windows PC logged in as the script owner. Click **Mulai Pemutaran** to enable audio.
+7. Deploy the Apps Script web app as **Execute as me / Only myself**; open its URL as the script owner to initialize the queue, then keep it open in Chrome or Edge on the Windows PC. Click **Mulai Pemutaran** to enable audio.
 8. Keep the YouTube player visible; set Windows sleep to Never and arrange opening the player after login. A browser may block further autoplay after reopening.
 
 ## GitHub Actions + clasp
