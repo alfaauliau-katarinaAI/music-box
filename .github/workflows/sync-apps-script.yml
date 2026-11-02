@@ -1,6 +1,10 @@
 name: Sync Google Apps Script
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sync-apps-script.yml'
 permissions:
   contents: read
 jobs:
