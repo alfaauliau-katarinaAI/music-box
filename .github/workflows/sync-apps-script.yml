@@ -1,0 +1,29 @@
+name: Sync Google Apps Script
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate
+        run: node tests/check.js && node tests/functional.js
+      - name: Restore clasp credentials from Secrets
+        shell: bash
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          CLASP_JSON: ${{ secrets.CLASP_JSON }}
+        run: |
+          test -n "$CLASPRC_JSON" || { echo 'Missing CLASPRC_JSON secret'; exit 1; }
+          test -n "$CLASP_JSON" || { echo 'Missing CLASP_JSON secret'; exit 1; }
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          printf '%s' "$CLASP_JSON" > .clasp.json
+          chmod 600 "$HOME/.clasprc.json" .clasp.json
+          node -e "const x=require('./.clasp.json'); if(!x.scriptId||x.rootDir!=='src') throw Error('Invalid clasp config')"
+      - name: Push to Apps Script HEAD
+        run: npx --yes @google/clasp push --force
