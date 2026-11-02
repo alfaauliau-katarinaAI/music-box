@@ -1,0 +1,19 @@
+name: Validate Music Bot
+on:
+  push:
+    branches: [main, feat/google-chat-music-bot]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run local checks
+        run: node tests/check.js && node tests/functional.js

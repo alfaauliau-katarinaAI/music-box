@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root {color-scheme:dark;font-family:Arial,sans-serif}
+    body {margin:0;background:#101827;color:#f1f5f9}
+    main {width:min(1100px,94vw);margin:18px auto}
+    h1 {margin:0 0 8px;font-size:24px}
+    .muted {color:#a9b9d0}
+    .card {padding:16px;background:#19283b;border-radius:14px;margin:12px 0}
+    #youtube {width:100%;aspect-ratio:16/9;min-height:270px}
+    button {background:#49c78b;border:0;border-radius:10px;padding:14px 20px;font-size:16px;font-weight:700;cursor:pointer}
+    .row {display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    li {padding:8px 0;border-bottom:1px solid #334155}
+    #message {padding:12px;background:#253346;border-radius:10px}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Office Music Bot</h1>
+  <p class="muted">Google Chat → Google Sheets → YouTube Player. Biarkan player video terlihat saat musik diputar.</p>
+  <div class="row">
+    <button id="startBtn" onclick="startPlayback()">Mulai Pemutaran</button>
+    <span id="message">Klik tombol sekali untuk mengaktifkan audio.</span>
+  </div>
+  <div class="card">
+    <div id="youtube"></div><h2 id="title">Belum ada lagu</h2>
+    <div id="requester" class="muted">Menunggu request...</div>
+  </div>
+  <div class="card"><h2>Antrean berikutnya</h2><ol id="queue"></ol></div>
+</main>
+<script>
+  let player=null,ready=false,armed=false,currentId=null,loading=false,transitioning=false,polling=false;
+  function message(t){document.getElementById('message').textContent=t}
+  function fail(error){loading=false;transitioning=false;message('Koneksi gagal: '+(error && error.message || error))}
+  function startPlayback(){
+    armed=true;document.getElementById('startBtn').style.display='none';
+    message('Player aktif. Menunggu lagu.');
+    if(ready)claim();
+  }
+  function onYouTubeIframeAPIReady(){
+    player=new YT.Player('youtube',{
+      width:800,height:450,playerVars:{playsinline:1,controls:1},
+      events:{
+        onReady(){ready=true;if(armed)claim()},
+        onStateChange(e){if(e.data===YT.PlayerState.ENDED && currentId)finish('PLAYED')},
+        onError(){if(currentId)finish('FAILED');else message('Video tidak tersedia')},
+        onAutoplayBlocked(){armed=false;document.getElementById('startBtn').style.display='';message('Autoplay diblokir. Klik Mulai Pemutaran.')}
+      }
+    });
+  }
+  function claim(){
+    if(!armed||!ready||loading||transitioning)return;
+    loading=true;
+    google.script.run.withSuccessHandler(song=>{
+      loading=false;
+      if(!song){currentId=null;message('Antrean kosong.');return}
+      if(currentId===song.id)return;
+      currentId=song.id;
+      document.getElementById('title').textContent=song.title;
+      document.getElementById('requester').textContent='Request: '+song.requester;
+      message('Memuat video...');
+      player.loadVideoById(song.videoId);
+    }).withFailureHandler(fail).playerClaimNext();
+  }
+  function finish(outcome){
+    if(!currentId||transitioning)return;
+    transitioning=true;
+    const id=currentId;
+    google.script.run.withSuccessHandler(()=>{
+      currentId=null;transitioning=false;
+      message(outcome==='FAILED'?'Video gagal, mencoba berikutnya.':'Lagu selesai.');
+      if(armed)claim();
+    }).withFailureHandler(fail).playerFinish(id,outcome);
+  }
+  function refresh(){
+    if(polling)return;
+    polling=true;
+    google.script.run.withSuccessHandler(state=>{
+      polling=false;
+      const node=document.getElementById('queue');node.textContent='';
+      (state.queue||[]).forEach(song=>{
+        const li=document.createElement('li');
+        li.textContent=song.title+' — '+song.requester;node.appendChild(li);
+      });
+      if(currentId&&(!state.now||state.now.id!==currentId)&&!transitioning){
+        player.stopVideo();currentId=null;message('Lagu dilewati oleh admin.');
+      }
+      if(armed&&!currentId&&!transitioning)claim();
+    }).withFailureHandler(error=>{
+      polling=false;message('Koneksi terputus: '+(error.message||error));
+    }).playerGetState();
+  }
+  setInterval(refresh,5000);refresh();
+</script>
+<script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>
