@@ -2,7 +2,7 @@
 
 Prototype for office Google Chat music requests and queue management, with playback through an authorized YouTube IFrame Player on a visible Windows PC.
 
-**Status:** source and local tests ready. Google Workspace, YouTube API, Google Chat, Apps Script deployment, and physical PC playback have not been configured or integration-tested.
+**Status:** Web App and Google Sheets created by project owner; YouTube API configured. Workspace add-on Chat integration has been updated in source but still needs deployment and end-to-end testing. Physical PC playback not verified.
 
 ## Features
 - Mention the Chat app and send: \`play Dewa 19 Kangen\` or \`play https://youtu.be/VIDEO_ID\`.
@@ -17,7 +17,7 @@ Prototype for office Google Chat music requests and queue management, with playb
 3. Push \`src/\` using clasp, or copy \`Main.gs\`, \`Player.html\`, and \`appsscript.json\` to the project manually.
 4. Configure **Script Properties**: \`YOUTUBE_API_KEY\`, \`ALLOWED_SPACE_NAME\` (for production), \`ADMIN_IDS\`; \`SPREADSHEET_ID\` will be set by \`setupOnce()\`. Never commit secrets.
 5. No manual \`setupOnce()\` is needed for the web-player flow. After deploying the web app as **Execute as me / Only myself**, open its URL as the script owner. The first visit calls \`setupOnce()\` to create the queue spreadsheet; Google may still require the owner to authorize Spreadsheet scopes before this succeeds. You can also run \`setupOnce()\` in the Apps Script editor if authorization/setup is blocked.
-6. Configure Google Chat API connection to the Apps Script deployment and add the app to a test Chat Space. Use \`@Bot whoami\` to learn the Space and user IDs.
+6. Google Chat API was created with the **Workspace add-on** setting, which cannot be unchecked after it is saved. The manifest supports this through \`addOns.chat\`; Chat callbacks accept add-on event objects. Deploy **Add-on** in Apps Script, then configure Google Chat API → Connection settings → Apps Script with that **Add-on deployment ID**, Message trigger \`onMessage\`, Added to space trigger \`onAddedToSpace\`, and your tester email in Visibility. This is separate from the player Web App deployment. Use \`@Bot whoami\` after the Chat app responds.
 7. Deploy the Apps Script web app as **Execute as me / Only myself**; open its URL as the script owner to initialize the queue, then keep it open in Chrome or Edge on the Windows PC. Click **Mulai Pemutaran** to enable audio.
 8. Keep the YouTube player visible; set Windows sleep to Never and arrange opening the player after login. A browser may block further autoplay after reopening.
 
