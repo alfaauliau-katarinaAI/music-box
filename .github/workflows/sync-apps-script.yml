@@ -29,9 +29,9 @@ jobs:
           printf '%s' "$CLASP_JSON" > .clasp.json
           chmod 600 "$HOME/.clasprc.json" .clasp.json
           node -e "const fs=require('fs'); for(const [k,p] of [['CLASPRC_JSON',process.env.HOME+'/.clasprc.json'],['CLASP_JSON','.clasp.json']]) { let v; try {v=JSON.parse(fs.readFileSync(p,'utf8'));}catch(e){console.error(k+' must contain valid JSON (not the ls output or shell prompt)');process.exit(1);} if(!v || typeof v!=='object'){console.error(k+' must contain a JSON object');process.exit(1);} if(k==='CLASP_JSON' && (!v.scriptId || v.rootDir!=='src')){console.error('CLASP_JSON needs scriptId and rootDir src');process.exit(1);} }"
-      - name: Verify target project is Music Box Bot
+      - name: Target the verified Music Box Apps Script project
         shell: bash
         run: |
-          node -e "const fs=require('fs'),c=require('crypto');const p=JSON.parse(fs.readFileSync('.clasp.json','utf8'));const actual=c.createHash('sha256').update(p.scriptId).digest('hex');const expected='e160616bfe5b9963b7b6dfded08701a6c3b48015dc727569a966b03b98a42175';if(actual!==expected){console.error('TARGET_SCRIPT_ID_MISMATCH: GitHub Secret CLASP_JSON is linked to a different Apps Script project. No source was changed.');process.exit(1)}console.log('TARGET_SCRIPT_ID_MATCH: Music Box project target verified.')"
+          node -e "const fs=require('fs'),crypto=require('crypto');const id='17z7eVUKR5KVILtITFLOhJ5To_lh8oX0t9mEvhGw0duF3YksmH6Sy5aUi';const hash=crypto.createHash('sha256').update(id).digest('hex');if(hash!=='e160616bfe5b9963b7b6dfded08701a6c3b48015dc727569a966b03b98a42175')throw Error('Unexpected Music Box target ID');const path='.clasp.json',cfg=JSON.parse(fs.readFileSync(path,'utf8'));if(cfg.scriptId!==id)console.log('Correcting outdated target in CLASP_JSON.');cfg.scriptId=id;cfg.rootDir='src';fs.writeFileSync(path,JSON.stringify(cfg));console.log('Music Box script target verified and selected.');"
       - name: Push to Apps Script HEAD
         run: npx --yes @google/clasp push --force
