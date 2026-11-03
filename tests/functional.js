@@ -38,4 +38,14 @@ assert.equal(ctx.playerClaimNext().id,'3');
 assert.equal(ctx.isAdmin_({name:'users/a'}),false);
 assert.equal(ctx.isAdmin_({name:'users/admin'}),true);
 assert.match(ctx.onMessage({space:{name:'spaces/notallowed'},message:{text:'queue'},user:{name:'users/a'}}).text,/diizinkan/);
+const addOnEvent={chat:{
+  user:{name:'users/a',displayName:'A'},
+  space:{name:'spaces/office'},
+  messagePayload:{message:{name:'spaces/office/messages/testhelp',text:'help'}}
+}};
+const addOnReply=ctx.onMessage(addOnEvent).hostAppDataAction.chatDataAction.createMessageAction.message;
+assert.match(addOnReply.text,/Office Music Bot/);
+assert.match(ctx.onAddedToSpace({chat:{space:{name:'spaces/office'}}}).hostAppDataAction.chatDataAction.createMessageAction.message.text,/Halo!/);
+addOnEvent.chat.messagePayload.message.text='whoami';
+assert.match(ctx.onMessage(addOnEvent).hostAppDataAction.chatDataAction.createMessageAction.message.text,/spaces\/office/);
 console.log('OK: queue, idempotency, limits, claim, skip, admin, space');
