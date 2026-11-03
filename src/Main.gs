@@ -27,8 +27,24 @@ function setupOnce() {
   console.log('SPREADSHEET_ID: ' + props.getProperty('SPREADSHEET_ID'));
 }
 
-/** Google Chat Apps Script interaction event handler. */
+/** Adapts Workspace add-on Chat event payloads to shared Music Box logic. */
 function onMessage(e) {
+  if (e && e.chat) {
+    const chat = e.chat, payload = chat.messagePayload || {};
+    const legacy = {
+      message: payload.message || {},
+      user: chat.user || (payload.message && payload.message.sender) || {},
+      space: chat.space || payload.space || {}
+    };
+    return addOnMessage_(onMessageLegacy_(legacy));
+  }
+  return onMessageLegacy_(e);
+}
+function addOnMessage_(message) {
+  return { hostAppDataAction: { chatDataAction: { createMessageAction: { message: message } } } };
+}
+/** Shared command logic for both Chat event formats. */
+function onMessageLegacy_(e) {
   try {
     const msg = e && e.message || {};
     const user = e && e.user || msg.sender || {};
@@ -64,7 +80,12 @@ function onMessage(e) {
   }
 }
 function onAddToSpace() { return { text: 'Halo! Sebut bot dan kirim play judul lagu, queue, nowplaying, atau help.' }; }
+function onAddedToSpace(e) { return addOnMessage_(onAddToSpace(e)); }
 function onRemoveFromSpace(e) { console.log('Bot removed from ' + ((e && e.space && e.space.name) || 'unknown')); }
+function onRemovedFromSpace(e) {
+  const chat = (e && e.chat) || {};
+  onRemoveFromSpace({space: chat.space || (chat.removedFromSpacePayload && chat.removedFromSpacePayload.space) || {}});
+}
 
 /** Web App dijalankan sebagai pemilik, dibatasi Only myself. */
 function doGet() {
