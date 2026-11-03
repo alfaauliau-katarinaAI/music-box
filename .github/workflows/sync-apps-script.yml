@@ -29,9 +29,10 @@ jobs:
           printf '%s' "$CLASP_JSON" > .clasp.json
           chmod 600 "$HOME/.clasprc.json" .clasp.json
           node -e "const fs=require('fs'); for(const [k,p] of [['CLASPRC_JSON',process.env.HOME+'/.clasprc.json'],['CLASP_JSON','.clasp.json']]) { let v; try {v=JSON.parse(fs.readFileSync(p,'utf8'));}catch(e){console.error(k+' must contain valid JSON (not the ls output or shell prompt)');process.exit(1);} if(!v || typeof v!=='object'){console.error(k+' must contain a JSON object');process.exit(1);} if(k==='CLASP_JSON' && (!v.scriptId || v.rootDir!=='src')){console.error('CLASP_JSON needs scriptId and rootDir src');process.exit(1);} }"
-      - name: Target the verified Music Box Apps Script project
+      - name: Locate Music Box project using authorized Google account
         shell: bash
         run: |
-          node -e "const fs=require('fs'),crypto=require('crypto');const id='17z7eVUKR5KVILtITFLOhJ5To_lh8oX0t9mEvhGw0duF3YksmH6Sy5aUi';const hash=crypto.createHash('sha256').update(id).digest('hex');if(hash!=='e160616bfe5b9963b7b6dfded08701a6c3b48015dc727569a966b03b98a42175')throw Error('Unexpected Music Box target ID');const path='.clasp.json',cfg=JSON.parse(fs.readFileSync(path,'utf8'));if(cfg.scriptId!==id)console.log('Correcting outdated target in CLASP_JSON.');cfg.scriptId=id;cfg.rootDir='src';fs.writeFileSync(path,JSON.stringify(cfg));console.log('Music Box script target verified and selected.');"
+          npx --yes @google/clasp list-scripts --json > /tmp/musicbox-scripts.json
+          node -e "const fs=require('fs'),crypto=require('crypto');const raw=JSON.parse(fs.readFileSync('/tmp/musicbox-scripts.json','utf8'));if(!Array.isArray(raw))throw Error('Unexpected list-scripts response');const m=raw.filter(x=>String(x.name||'').trim().toLowerCase()==='music box bot');if(m.length!==1){console.error('MUSIC_BOX_NOT_FOUND_OR_AMBIGUOUS: matching projects visible to authenticated Google account = '+m.length);process.exit(1)}const id=m[0].id;const cfg=JSON.parse(fs.readFileSync('.clasp.json','utf8'));cfg.scriptId=id;cfg.rootDir='src';fs.writeFileSync('.clasp.json',JSON.stringify(cfg));const hash=crypto.createHash('sha256').update(id).digest('hex');console.log('Verified project name: music box bot. Script ID matches screenshot: '+(hash==='e160616bfe5b9963b7b6dfded08701a6c3b48015dc727569a966b03b98a42175'));"
       - name: Push to Apps Script HEAD
         run: npx --yes @google/clasp push --force
