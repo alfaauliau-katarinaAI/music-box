@@ -5,9 +5,11 @@ const html=fs.readFileSync('src/Player.html','utf8');
 const manifest=JSON.parse(fs.readFileSync('src/appsscript.json','utf8'));
 new vm.Script(code,{filename:'Main.gs'});
 assert.equal(manifest.runtimeVersion,'V8');
+assert.equal(typeof manifest.addOns.chat,'object');
+assert.equal(manifest.chat,undefined);
 assert.match(code,/function doGet\(\)\s*\{\s*\/\/[^\n]*\n\s*\/\/[^\n]*\n\s*setupOnce\(\);/);
 assert.ok(html.includes('youtube.com/iframe_api'));
-for(const n of ['onMessage','onAddToSpace','doGet','setupOnce','playerClaimNext','playerFinish','playerGetState'])
+for(const n of ['onMessage','onAddedToSpace','onRemovedFromSpace','onAddToSpace','doGet','setupOnce','playerClaimNext','playerFinish','playerGetState'])
   assert.match(code,new RegExp('function\\s+'+n+'\\s*\\('));
 const ctx=vm.createContext({console});vm.runInContext(code,ctx);
 const command=s=>JSON.parse(JSON.stringify(ctx.parseCommand_(s)));
